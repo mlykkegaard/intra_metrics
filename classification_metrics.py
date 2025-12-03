@@ -2,7 +2,8 @@
 """
 Classification Metrics Calculator for Differential Abundance Analysis
 Calculates confusion matrix, precision, recall, F1-score, AUC-ROC, etc.
-Also generates a volcano plot (effect_size or log2FC vs -log10 p-value).
+Also generates a volcano plot (effect_size or log2FC vs -log10 p-value),
+colored by true labels with a legend.
 """
 
 import argparse
@@ -55,9 +56,10 @@ def calculate_metrics(y_true, y_pred, y_score=None):
     return metrics
 
 
-def plot_volcano(results, output_dir, name, fdr_threshold=0.05):
+def plot_volcano(results, y_true, output_dir, name, fdr_threshold=0.05):
     """
-    Create a volcano plot (effect_size or log2FC vs -log10 p-value).
+    Create a volcano plot (effect_size or log2FC vs -log10 p-value),
+    coloring only the true labels.
     """
     # Detect fold-change/effect size column
     fc_col = None
@@ -81,14 +83,23 @@ def plot_volcano(results, output_dir, name, fdr_threshold=0.05):
 
     logfc = results[fc_col]
     neglogp = -np.log10(results[p_val_col])
-    sig = results[p_val_col] < fdr_threshold
+
+    # Color by true labels instead of significance
+    colors = pd.Series(y_true, index=results.index).map({1: "red", 0: "grey"})
 
     plt.figure(figsize=(8,6))
-    plt.scatter(logfc, neglogp, c=sig.map({True:'red', False:'grey'}), alpha=0.7)
+    plt.scatter(logfc, neglogp, c=colors, alpha=0.7)
     plt.axhline(-np.log10(fdr_threshold), color='blue', linestyle='--', linewidth=1)
     plt.xlabel(fc_col)
     plt.ylabel("-Log10 p-value")
-    plt.title(f"Volcano Plot: {name}")
+    plt.title(f"Volcano Plot: {name} (colored by true labels)")
+
+    # Add legend
+    legend_elements = [
+        plt.Line2D([0], [0], marker='o', color='w', label='True DE', markerfacecolor='red', markersize=8),
+        plt.Line2D([0], [0], marker='o', color='w', label='Not DE', markerfacecolor='grey', markersize=8)
+    ]
+    plt.legend(handles=legend_elements, loc='upper right')
 
     outpath = os.path.join(output_dir, f"{name}_volcano.png")
     plt.savefig(outpath, dpi=300, bbox_inches='tight')
@@ -178,7 +189,7 @@ def main():
         detailed_df['Prediction_Score'] = y_score
     detailed_df.to_csv(detailed_file)
 
-    plot_volcano(results, args.output_dir, args.name, fdr_threshold=args.fdr_threshold)
+    plot_volcano(results, y_true, args.output_dir, args.name, fdr_threshold=args.fdr_threshold)
 
 
 if __name__ == "__main__":
