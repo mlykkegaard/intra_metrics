@@ -17,6 +17,8 @@ from sklearn.metrics import (
     accuracy_score,
     roc_auc_score,
     average_precision_score,
+    roc_curve,
+    precision_recall_curve,
 )
 import os
 import matplotlib.pyplot as plt
@@ -106,6 +108,32 @@ def plot_volcano(results, y_true, output_dir, name, fdr_threshold=0.05):
     plt.close()
     print(f"Volcano plot saved to: {outpath}")
 
+def plot_curves(y_true, y_score, output_dir, name):
+    """Plot ROC and Precision-Recall curves side by side"""
+    fpr, tpr, _ = roc_curve(y_true, y_score)
+    precision, recall, _ = precision_recall_curve(y_true, y_score)
+
+    fig, axes = plt.subplots(1, 2, figsize=(14,6))
+
+    # ROC curve
+    axes[0].plot(fpr, tpr, color='red', lw=2, label='ROC curve')
+    axes[0].plot([0,1], [0,1], color='grey', linestyle='--')
+    axes[0].set_xlabel("False Positive Rate")
+    axes[0].set_ylabel("True Positive Rate")
+    axes[0].set_title(f"ROC Curve: {name}")
+    axes[0].legend(loc="lower right")
+
+    # Precision-Recall curve
+    axes[1].plot(recall, precision, color='blue', lw=2, label='PR curve')
+    axes[1].set_xlabel("Recall")
+    axes[1].set_ylabel("Precision")
+    axes[1].set_title(f"Precision-Recall Curve: {name}")
+    axes[1].legend(loc="lower left")
+
+    outpath = os.path.join(output_dir, f"{name}_curves.png")
+    plt.savefig(outpath, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"ROC and PR curves saved to: {outpath}")
 
 def main():
     parser = argparse.ArgumentParser(
@@ -190,6 +218,12 @@ def main():
     detailed_df.to_csv(detailed_file)
 
     plot_volcano(results, y_true, args.output_dir, args.name, fdr_threshold=args.fdr_threshold)
+
+    # ROC + PR curves (combined figure)
+    if y_score is not None:
+	plot_curves(y_true, y_score, args.output_dir, args.name)
+    else:
+	print("Skipping ROC/PR curves because no continuous score (y_score) was found.")
 
 
 if __name__ == "__main__":
