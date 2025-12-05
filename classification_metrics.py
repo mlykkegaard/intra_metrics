@@ -220,7 +220,7 @@ def main():
 
     plot_volcano(results, y_true, args.output_dir, args.name, fdr_threshold=args.fdr_threshold)
 
-    #plot_curves(y_true, y_score, args.output_dir, args.name)
+    plot_curves(y_true, y_score, args.output_dir, args.name)
 
 
 if __name__ == "__main__":
