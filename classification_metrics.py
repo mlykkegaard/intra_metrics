@@ -98,8 +98,8 @@ def plot_volcano(results, y_true, output_dir, name, fdr_threshold=0.05):
 
     # Add legend
     legend_elements = [
-        plt.Line2D([0], [0], marker='o', color='w', label='True DE', markerfacecolor='red', markersize=8),
-        plt.Line2D([0], [0], marker='o', color='w', label='Not DE', markerfacecolor='grey', markersize=8)
+        plt.Line2D([0], [0], marker='o', color='w', label='Truly differentially expressed (ground truth)', markerfacecolor='red', markersize=8),
+        plt.Line2D([0], [0], marker='o', color='w', label='Not truly differentially expressed', markerfacecolor='grey', markersize=8)
     ]
     plt.legend(handles=legend_elements, loc='upper right')
 
