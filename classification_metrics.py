@@ -101,7 +101,7 @@ def plot_volcano(results, y_true, output_dir, name, fdr_threshold=0.05):
         plt.Line2D([0], [0], marker='o', color='w', label='Truly differentially expressed', markerfacecolor='red', markersize=8),
         plt.Line2D([0], [0], marker='o', color='w', label='Not truly differentially expressed', markerfacecolor='grey', markersize=8)
     ]
-    plt.legend(handles=legend_elements, loc='upper right')
+    plt.legend(handles=legend_elements, loc='lower right')
 
     outpath = os.path.join(output_dir, f"{name}_volcano.png")
     plt.savefig(outpath, dpi=300, bbox_inches='tight')
