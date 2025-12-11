@@ -188,7 +188,17 @@ def main():
                 p_val_col = col
                 break
         if p_val_col:
-            y_pred = (results[p_val_col] < args.fdr_threshold).astype(int).values
+            # Handle NA values: treat them as opposite of true label (always incorrect)
+            p_values = results[p_val_col]
+            na_mask = pd.isna(p_values)
+            
+            # Make predictions based on p-value threshold
+            y_pred = (p_values < args.fdr_threshold).astype(int).values
+            
+            # For NA values, predict opposite of true label
+            if na_mask.any():
+                print(f"Warning: Found {na_mask.sum()} NA p-values. Treating as incorrect predictions.")
+                y_pred[na_mask] = 1 - y_true[na_mask]
         elif args.score_column in results.columns:
             y_pred = (results[args.score_column] < args.fdr_threshold).astype(int).values
         else:
@@ -201,7 +211,16 @@ def main():
             p_val_col = col
             break
     if p_val_col:
-        y_score = 1 - results[p_val_col].values
+        # Handle NA values in scores
+        p_values = results[p_val_col]
+        na_mask = pd.isna(p_values)
+        
+        # Convert p-values to scores (1 - p_value)
+        y_score = 1 - p_values.values
+        
+        # For NA values, use 0 score (lowest confidence)
+        if na_mask.any():
+            y_score[na_mask] = 0.0
     elif args.score_column in results.columns:
         y_score = 1 - results[args.score_column].values
 
