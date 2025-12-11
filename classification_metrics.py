@@ -235,6 +235,7 @@ def main():
     detailed_df['Predicted_Label'] = y_pred
     if y_score is not None:
         detailed_df['Prediction_Score'] = y_score
+    detailed_df.index.name = 'Protein'  # Set index name so first protein isn't skipped
     detailed_df.to_csv(detailed_file)
 
     plot_volcano(results, y_true, args.output_dir, args.name, fdr_threshold=args.fdr_threshold)
