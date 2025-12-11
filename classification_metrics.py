@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 def load_data(results_file, labels_file):
     """Load results and ground truth labels"""
     results = pd.read_csv(results_file)
-    labels = pd.read_csv(labels_file, index_col=0)
+    labels = pd.read_csv(labels_file, index_col=0, header=None)
     return results, labels
 
 
