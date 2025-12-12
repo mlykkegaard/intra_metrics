@@ -20,6 +20,7 @@ from sklearn.metrics import (
     roc_curve,
     precision_recall_curve,
 )
+from statsmodels.stats.multitest import multipletests
 import os
 import matplotlib.pyplot as plt
 
@@ -188,17 +189,32 @@ def main():
                 p_val_col = col
                 break
         if p_val_col:
-            # Handle NA values: treat them as opposite of true label (always incorrect)
+            # Get p-values
             p_values = results[p_val_col]
             na_mask = pd.isna(p_values)
             
-            # Make predictions based on p-value threshold
-            y_pred = (p_values < args.fdr_threshold).astype(int).values
+            # Apply Benjamini-Hochberg FDR correction
+            # For NA values, we'll handle them after correction
+            p_values_for_correction = p_values.copy()
+            p_values_for_correction[na_mask] = 1.0  # Temporarily set NA to 1.0 for correction
             
-            # For NA values, predict opposite of true label
+            # Perform BH correction
+            reject, adjusted_pvals, _, _ = multipletests(p_values_for_correction, 
+                                                          alpha=args.fdr_threshold, 
+                                                          method='fdr_bh')
+            
+            # Make predictions based on adjusted p-values
+            y_pred = adjusted_pvals < args.fdr_threshold
+            y_pred = y_pred.astype(int)
+            
+            # For NA values, predict opposite of true label (always incorrect)
             if na_mask.any():
                 print(f"Warning: Found {na_mask.sum()} NA p-values. Treating as incorrect predictions.")
                 y_pred[na_mask] = 1 - y_true[na_mask]
+                
+            # Store adjusted p-values in results for later use
+            results['adj_pval_BH'] = adjusted_pvals
+            results.loc[na_mask, 'adj_pval_BH'] = np.nan
         elif args.score_column in results.columns:
             y_pred = (results[args.score_column] < args.fdr_threshold).astype(int).values
         else:
